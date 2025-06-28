@@ -3,6 +3,7 @@
 // This is the main entry point for the Citadel application.
 // It initializes core services and determines the initial screen.
 
+import 'dart:convert'; // <-- ADDED for base64 encoding
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +14,7 @@ import 'core/database/database_service.dart';
 import 'core/network/network_manager.dart';
 
 import 'features/onboarding/generate_identity_screen.dart';
-import 'features/home/home_screen.dart'; // We will create this screen next
+import 'features/home/home_screen.dart';
 
 // Create a simple Service Locator
 final sl = GetIt.instance;
@@ -65,6 +66,7 @@ class CitadelApp extends StatelessWidget {
                 }
                 if (snapshot.hasError) {
                   // Handle error, maybe show an error screen
+                  print(snapshot.error); // For debugging
                   return const Scaffold(body: Center(child: Text("Fatal Error: Could not load identity.")));
                 }
                 // While loading, show a splash screen
@@ -79,11 +81,14 @@ class CitadelApp extends StatelessWidget {
     final identity = CitadelIdentity.fromMnemonic(existingMnemonic);
     
     // Register the loaded identity with our service locator
+    if (sl.isRegistered<CitadelIdentity>()) {
+      sl.unregister<CitadelIdentity>();
+    }
     sl.registerSingleton<CitadelIdentity>(identity);
 
-    // Use a part of the identity's key to create a unique, secure password
-    // for the database.
-    final dbPassword = identity.identityKey.encode(encoder: Base64Encoder.instance).substring(0, 32);
+    // Use the identity's key to create a unique, secure password for the database.
+    // The key itself is a Uint8List, so we Base64 encode it to get a string.
+    final dbPassword = base64.encode(identity.identityKey); // <-- CORRECTED
     
     // Initialize services
     await sl<DatabaseService>().init(dbPassword);

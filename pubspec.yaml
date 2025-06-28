@@ -1,33 +1,29 @@
 name: citadel
 description: "A fully open source, demonstrably fast, and verifiably free forever messenger."
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # Updated to a modern SDK constraint
+  sdk: '>=3.2.0 <4.0.0' # Use a more recent SDK constraint
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # Core Functionality
-  # For P2P networking (as per your blueprint [F1])
-  # Note: A mature, all-in-one libp2p package for Flutter is still evolving.
-  # We will structure our code to accommodate it once available. For now, this is a placeholder.
-  # dart_libp2p: ^0.1.0 # (Placeholder)
-  
-  # For secure on-device storage of the mnemonic phrase ([F4])
+  # For P2P networking, using the best available libp2p implementation [F1]
+  dart_libp2p: ^0.1.2 # <-- CORRECTED to the right package name and a recent version
+
+  # For secure on-device storage of the mnemonic phrase [F4]
   flutter_secure_storage: ^9.0.0
   
-  # For the encrypted local database ([F4])
-  # Using sqflite with SQLCipher support
-  sqflite_sqlcipher: ^2.1.0
-  path_provider: ^2.0.11 # To find the correct local path for the database
-  path: ^1.8.2
+  # For the encrypted local database [F4]
+  sqflite_sqlcipher: ^2.2.1
+  path_provider: ^2.1.1 
+  path: ^1.8.3
 
-  # For Identity & Cryptography ([F2], [F3], [ID3])
+  # For Identity & Cryptography [F2], [F3], [ID3]
   bip39: ^1.0.6
-  pinenacl: ^0.4.1
+  pinenacl: ^0.5.0
   
   # UI & Utility
   cupertino_icons: ^1.0.8
