@@ -1,122 +1,65 @@
-import 'package:flutter/material.dart';
+// File: lib/main.dart
 
-void main() {
-  runApp(const MyApp());
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:citadel/src/services/storage_service.dart';
+import 'package:citadel/src/services/audio_service.dart';
+import 'package:citadel/src/services/mesh_service.dart';
+import 'package:citadel/src/presentation/screens/splash_screen.dart';
+import 'package:citadel/src/utils/app_theme.dart';
+
+// --- Service Providers ---
+// Using Riverpod to provide our service instances to the entire app.
+// This makes them easily accessible and testable.
+
+/// Provider for the singleton StorageService instance.
+final storageServiceProvider = Provider<StorageService>((ref) => StorageService());
+
+/// Provider for the AudioService.
+/// It uses `ChangeNotifierProvider` because AudioService notifies listeners of state changes.
+final audioServiceProvider = ChangeNotifierProvider<AudioService>((ref) => AudioService());
+
+/// Provider for the MeshService.
+/// Depends on StorageService, which Riverpod handles automatically.
+final meshServiceProvider = ChangeNotifierProvider<MeshService>((ref) {
+  final storageService = ref.watch(storageServiceProvider);
+  return MeshService(storageService);
+});
+
+
+Future<void> main() async {
+  // Ensure that Flutter widgets are initialized before we run any other code.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize our core services before the app runs.
+  // We create a temporary ProviderContainer to access the providers
+  // outside the widget tree.
+  final container = ProviderContainer();
+  await container.read(storageServiceProvider).init();
+  await container.read(audioServiceProvider).init();
+  await container.read(meshServiceProvider).init();
+  
+  // Run the app, wrapped in a ProviderScope to make providers available to all widgets.
+  runApp(
+    ProviderScope(
+      parent: container,
+      child: const CitadelApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CitadelApp extends StatelessWidget {
+  const CitadelApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      title: 'Citadel',
+      theme: AppTheme.softPastelTheme,
+      debugShowCheckedModeBanner: false,
+      // We start with a SplashScreen to handle any further async setup
+      // and to decide whether to show the feed or the provisioning screen.
+      home: const SplashScreen(),
     );
   }
 }
