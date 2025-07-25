@@ -1,4 +1,4 @@
-# Citadel  Citadel
+# Citadel 
 
 > An anonymous, offline, peer-to-peer empathy network.
 
